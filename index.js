@@ -31,7 +31,10 @@ async function run() {
     const programsCollection = client.db("FundingTrail").collection("funding");
     const usersCollection = client.db("FundingTrail").collection("users");
 
-    // app.get('')
+    app.get("/programs", async (req, res) => {
+      const result = await programsCollection.find().toArray();
+      res.send(result);
+    });
 
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
