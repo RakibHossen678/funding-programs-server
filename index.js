@@ -40,6 +40,12 @@ async function run() {
       res.send(result);
     });
 
+    app.post("/users", async (req, res) => {
+      const userData = req.body;
+      const result = await usersCollection.insertOne(userData);
+      res.send(result);
+    });
+
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
