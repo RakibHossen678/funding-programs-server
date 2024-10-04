@@ -27,12 +27,16 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    // Send a ping to confirm a successful connection
     const programsCollection = client.db("FundingTrail").collection("funding");
     const usersCollection = client.db("FundingTrail").collection("users");
 
     app.get("/programs", async (req, res) => {
-      const result = await programsCollection.find().toArray();
+      const programType = req.query.type;
+      const programPrice = parseInt(req.query.price);
+      const query = {};
+      if (programType) query.type = programType;
+      if (programPrice) query.price = programPrice;
+      const result = await programsCollection.find(query).toArray();
       res.send(result);
     });
 
