@@ -99,7 +99,7 @@ async function run() {
     });
 
     //update programs
-    app.put("/programs/:id", async (req, res) => {
+    app.put("/UpdatePrograms/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new ObjectId(id) };
       const updatedProgram = req.body;
@@ -108,7 +108,7 @@ async function run() {
           type: updatedProgram.type,
           name: updatedProgram.name,
           challenge: updatedProgram.challenge,
-          FundedTrader: updatedProgram.FundingTrail,
+          FundedTrader: updatedProgram.FundedTrader,
           Verification: updatedProgram.Verification,
           price: updatedProgram.price,
         },
