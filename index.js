@@ -1,4 +1,5 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const axios = require("axios");
 const express = require("express");
 const nodemailer = require("nodemailer");
 const app = express();
@@ -131,6 +132,8 @@ async function run() {
     app.post("/payment", async (req, res) => {
       const checkoutData = req.body;
       sendMail(checkoutData.email);
+      const result = await CheckoutCollection.insertOne(checkoutData);
+      res.send(result);
     });
 
     console.log(
