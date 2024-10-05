@@ -1,4 +1,5 @@
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const bodyParser = require("body-parser");
 const axios = require("axios");
 const express = require("express");
 const nodemailer = require("nodemailer");
@@ -15,6 +16,7 @@ const corsOptions = {
 };
 app.use(cors(corsOptions));
 app.use(express.json());
+app.use(bodyParser.json());
 
 //send mail
 const sendMail = (emailAddress) => {
@@ -52,9 +54,6 @@ const sendMail = (emailAddress) => {
     }
   });
 };
-
-const tazapayApiKey = process.env.TAZAPAY_API_KEY;
-const tazapaySecret = process.env.TAZAPAY_SECRET;
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.vrdje6l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -131,11 +130,59 @@ async function run() {
 
     app.post("/payment", async (req, res) => {
       const checkoutData = req.body;
-      sendMail(checkoutData.email);
-      const result = await CheckoutCollection.insertOne(checkoutData);
-      res.send(result);
-    });
+      console.log(checkoutData);
 
+      const options = {
+        method: "POST",
+        url: "https://service-sandbox.tazapay.com/v3/checkout",
+        headers: {
+          accept: "application/json",
+          Authorization: `Basic ${Buffer.from(
+            `${process.env.TAZAPAY_API_KEY}:${process.env.TAZAPAY_API_SECRET}`
+          ).toString("base64")}`,
+          "Content-Type": "application/json",
+        },
+        data: {
+          customer_details: {
+            phone: { number: checkoutData.phone, calling_code: "+88" },
+            name: checkoutData.firstName,
+            email: checkoutData.email,
+            country: checkoutData.country,
+          },
+          invoice_currency: "USD",
+          amount: Math.floor(checkoutData.totalPrice * 100),
+          transaction_description: "Funding amount",
+        },
+      };
+
+      try {
+        const response = await axios.request(options);
+        console.log(response.data);
+
+        // Send confirmation mail
+        await sendMail(checkoutData.email);
+
+        // Store the checkout details in the database
+        const result = await CheckoutCollection.insertOne({
+          ...checkoutData,
+          paymentStatus: response.data.status,
+          transactionId: response.data.transaction_id,
+        });
+
+        res.status(200).send({
+          success: true,
+          message: "Payment initiated successfully",
+          data: response.data,
+        });
+      } catch (error) {
+        console.error("Error processing payment:", error);
+        res.status(500).send({
+          success: false,
+          message: "Payment failed",
+          error: error.message,
+        });
+      }
+    });
     console.log(
       "Pinged your deployment. You successfully connected to MongoDB!"
     );
