@@ -1,3 +1,4 @@
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const express = require("express");
 const nodemailer = require("nodemailer");
 const app = express();
@@ -54,7 +55,6 @@ const sendMail = (emailAddress) => {
 const tazapayApiKey = process.env.TAZAPAY_API_KEY;
 const tazapaySecret = process.env.TAZAPAY_SECRET;
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.vrdje6l.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -72,6 +72,7 @@ async function run() {
     const usersCollection = client.db("FundingTrail").collection("users");
     const CheckoutCollection = client.db("FundingTrail").collection("checkout");
 
+    // get data
     app.get("/programs", async (req, res) => {
       const programType = req.query.type;
       const programPrice = parseInt(req.query.price);
@@ -82,15 +83,52 @@ async function run() {
       res.send(result);
     });
 
+    //save user
     app.post("/users", async (req, res) => {
       const userData = req.body;
       const result = await usersCollection.insertOne(userData);
       res.send(result);
     });
 
+    //delete program
+    app.delete("program/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await usersCollection.deleteOne({ _id: new ObjectId(id) });
+      res.send(result);
+    });
+
+    //update programs
+    app.put("/programs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const updatedProgram = req.body;
+      const updateDoc = {
+        $set: {
+          type: updatedProgram.type,
+          name: updatedProgram.name,
+          challenge: updatedProgram.challenge,
+          FundedTrader: updatedProgram.FundingTrail,
+          Verification: updatedProgram.Verification,
+          price: updatedProgram.price,
+        },
+      };
+      const result = await programsCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+
+    //get user by email
+    app.get("/getUser/:email", async (req, res) => {
+      const email = req.params.email;
+      let query = {};
+      if (email !== undefined) {
+        query = { email: email };
+      }
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
     app.post("/payment", async (req, res) => {
       const checkoutData = req.body;
-      console.log(checkoutData.email);
       sendMail(checkoutData.email);
     });
 
