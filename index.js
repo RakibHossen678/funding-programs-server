@@ -91,9 +91,10 @@ async function run() {
     });
 
     //delete program
-    app.delete("program/:id", async (req, res) => {
+    app.delete("/program/:id", async (req, res) => {
       const id = req.params.id;
-      const result = await usersCollection.deleteOne({ _id: new ObjectId(id) });
+      const query = { _id: new ObjectId(id) };
+      const result = await programsCollection.deleteOne(query);
       res.send(result);
     });
 
