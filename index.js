@@ -10,7 +10,11 @@ const port = process.env.PORT || 4000;
 
 // middleware
 const corsOptions = {
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: [
+    "http://localhost:5173",
+    "http://localhost:5174",
+    "https://fundingprograms-d66be.web.app",
+  ],
   credentials: true,
   optionSuccessStatus: 200,
 };
